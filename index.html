@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./public/style.css" />
+    <title>Test</title>
+  </head>
+  <body>
+    <div id="container">
+      <div id="title">
+        <h1>Pokemon online Websocket</h1>
+      </div>
+      <main id="canvas"></main>
+    </div>
+  </body>
+  <script>
+    const $canvas = document.getElementById("canvas");
+    let users = {};
+    let user = undefined;
+
+    function renderUsers() {
+      $canvas.innerHTML = `
+    ${Object.keys(users)
+      .map((userId) => {
+        const user = users[userId];
+        return `
+        <div class="player" style="top: ${user.y || 0}px; left: ${
+          user.x || 0
+        }px;">${user.id}</div>
+      `;
+      })
+      .join("")}
+  `;
+    }
+    renderUsers();
+  </script>
+
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    var socket = io();
+
+    socket.on("connect", () => {
+      document.querySelector("title").innerText = socket.id;
+      users[socket.id] = { id: socket.id };
+      renderUsers();
+      console.log(users);
+    });
+
+    window.addEventListener("keydown", (e) => {
+      const moves = {
+        ArrowUp: { x: 0, y: -10 },
+        ArrowDown: { x: 0, y: 10 },
+        ArrowLeft: { x: -10, y: 0 },
+        ArrowRight: { x: 10, y: 0 },
+      };
+      const move = moves[e.key];
+      if (move) socket.emit("ON_USER_MOVE", { id: socket.id, move });
+    });
+
+    socket.on("ON_USER_UPDATE", (usersUpdates) => {
+      users = JSON.parse(usersUpdates);
+      renderUsers();
+    });
+  </script>
+</html>
